@@ -102,14 +102,41 @@ socket.addEventListener('message', (message) => {
     }
 
     // Si on reçoit une conversation complète :
+    if (messageContent.type === "messages-list") {
+
+        console.log(messageContent.content);
+        if (messageContent.content === "false") {
+            document.querySelector(".messages-list").innerText = "Vous n'avez pas échangé de message avec cet utilisateur !"
+        } else {
+            //console.log(JSON.parse(messageContent));
+            
+            let messagesZone = document.querySelector(".messages-list");
+            messagesZone.innerHTML = "<ul></ul>";
+            JSON.parse(messageContent.content).forEach(obj => {
+                messagesZone.querySelector("ul").innerHTML += "<li>" + obj.from + ": " + obj.content +  "</li>"
+            });
+            
+        }
+
+    }
 });
 
 
 // Quand l'utilisateur choisit quelqu'un à qui envoyer un message :
 document.addEventListener('click', (e) => {
 
-    if (usersList.includes(e.srcElement.innerHTML)) {
-        sendMessageTo = e.srcElement.innerHTML;
+    let target;
+
+    if (e.srcElement.innerHTML.includes("span")) {
+        target = e.srcElement.innerText.replace(/[0-9)(]+/, '').trim();
+    } else {
+        target = e.srcElement.innerHTML;
+    }
+
+    console.log(target);
+
+    if (usersList.includes(target)) {
+        sendMessageTo = target
         document.querySelector(".messages .input").innerHTML = '<label>Message à ' + sendMessageTo + ' : </label> <input type="text" />';
 
         // Quand l'utilisateur envoit le message :
@@ -120,10 +147,15 @@ document.addEventListener('click', (e) => {
             
             let messageContent = document.querySelector("input").value;
             socket.send(newJSONMessage("dm", messageContent, sendMessageTo));
+
+            // TODO : supprimer le contenu du input + ajouter le message envoyé dans la fenêtre
         });
 
         // Demander la liste des derniers messages avec cet utilisateur
-        socket.send(newJSONMessage("return-the-fucking-dms", name));
+        // name = qui demande le message
+        // target = avec qui cet utilisateur a/veut échanger des messages
+        //console.log("aaaa : " + target);
+        socket.send(newJSONMessage("return-the-fucking-dms", name, target));
     }
 
 });

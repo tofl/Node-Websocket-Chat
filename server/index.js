@@ -68,6 +68,7 @@ wss.on('connection', function connection(ws) {
         if (message.type === "dm") {
             // Récupérer le nom de la personne qui a envoyé le message :
             let to = message.to;
+            console.log(message);
             let from;
             currentUsers.forEach(c => {
                 if (c.client === ws) {
@@ -110,13 +111,35 @@ wss.on('connection', function connection(ws) {
                     c.client.send(newJSONMessage("notification", from));
                 }
             });
-
-            console.log(exchanges);
         }
 
         if (message.type === "return-the-fucking-dms") {
-            let correspondant = message.content;
-            console.log(correspondant);
+            let from = message.content;
+            let target = message.to;
+
+            // Récupérer le client :
+            let clientToSendMessageTo;
+            currentUsers.forEach(c => {
+                if (c.name === from) {
+                    clientToSendMessageTo = c.client;
+                }
+            });
+
+            let sent = false;
+            console.log("From : " + from + "; Target : " + target)
+
+            exchanges.forEach(obj => {
+                if (obj.between.includes(from) && obj.between.includes(target)) {
+                    // On envoit la liste des messages :
+                    clientToSendMessageTo.send(newJSONMessage("messages-list", JSON.stringify(obj.messages)));
+                    console.log("Historique des messages retrouvé");
+                    sent = true;
+                }
+            });
+
+            if (!sent) {
+                clientToSendMessageTo.send(newJSONMessage("messages-list", "false"));
+            }
         }
     });
 });
@@ -147,8 +170,6 @@ function sendUsersList() {
     currentUsers.forEach(obj => {
         userNames.push(obj.name);
     });
-
-    //console.log(JSON.stringify(userNames));
 
     currentUsers.forEach(c => {
         c.client.send(newJSONMessage("users-list", JSON.stringify(userNames)));
