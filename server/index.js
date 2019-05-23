@@ -157,6 +157,30 @@ wss.on('connection', function connection(ws) {
                 c.send(newJSONMessage("dm-from-admin", message.content));
             });
         }
+
+        // Quand le client envoit un message à l'admin :
+        if (message.type === "message-to-admin") {
+            let clientId = "_";
+            let i = 0;
+            wss.clients.forEach(c => {
+                if (c == ws) {
+                    clientId += i;
+                }
+                i++;
+            });
+            admin.send(newJSONMessage("dm", message.content, clientId));
+        }
+
+        // Quand l'admin répond à un client spécifiquement :
+        if (message.type === "admin-to-client") {
+            let i = 0;
+            wss.clients.forEach(c => {
+                if (i == message.to) {
+                    c.send(newJSONMessage("dm-from-admin", message.content));
+                }
+                i++;
+            });
+        }
     });
 });
 
