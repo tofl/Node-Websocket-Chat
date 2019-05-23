@@ -6,6 +6,8 @@ const wss = new WebSocket.Server({ port: 8080 });
 
 let currentUsers = [];
 
+let admin;
+
 // Stocker la liste des messages :
 /*
     [
@@ -140,6 +142,20 @@ wss.on('connection', function connection(ws) {
             if (!sent) {
                 clientToSendMessageTo.send(newJSONMessage("messages-list", "false"));
             }
+        }
+
+        // PARTIE WORDPRESS
+
+        // Connexion de l'admin (mot de passe = 1234) :
+        if (message.type === "admin-login" && message.content === "1234") {
+            admin = ws;
+        }
+
+        // Quand l'admin envoit un message à tout le monde
+        if (message.type === "admin-dm") {
+            wss.clients.forEach(c => {
+                c.send(newJSONMessage("dm-from-admin", message.content));
+            });
         }
     });
 });
